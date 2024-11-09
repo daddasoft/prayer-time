@@ -22,20 +22,56 @@ export const usePrayerTimes = () => {
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth() + 1;
 
+
   useEffect(() => {
-    // Get the user's current location
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setLatitude(position.coords.latitude);
-        setLongitude(position.coords.longitude);
-      },
-      (error) => {
-        console.error("Error getting location:", error);
-      }
-    );
+    const getLocation = () => {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLatitude(position.coords.latitude);
+          setLongitude(position.coords.longitude);
+          setLocationError(null); // Reset error on successful location fetch
+        },
+        (error) => {
+          let errorMessage = '';
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              errorMessage = 'Location access denied by user.';
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMessage = 'Location information is unavailable.';
+              break;
+            case error.TIMEOUT:
+              errorMessage = 'Location request timed out.';
+              break;
+            default:
+              errorMessage = 'An unknown error occurred.';
+          }
+          setLocationError(errorMessage);
+          console.error("Error getting location:", error);
+        }
+      );
+    };
+  
+    // Check permission status if supported
+    if (navigator.permissions) {
+      navigator.permissions.query({ name: 'geolocation' }).then((result) => {
+        if (result.state === 'granted') {
+          getLocation();
+        } else if (result.state === 'prompt') {
+          getLocation();
+        } else {
+          setLocationError('Location access is denied. Please enable location access in your browser settings.');
+        }
+      });
+    } else {
+      // Fallback to directly calling getCurrentPosition
+      getLocation();
+    }
   }, []);
 
   useEffect(() => {
@@ -48,7 +84,7 @@ export const usePrayerTimes = () => {
   const fetchPrayerTimes = async (lat: number, lon: number) => {
     try {
       setIsLoading(true);
-      const response = await axios.get(`http://api.aladhan.com/v1/calendar?latitude=${lat}&longitude=${lon}&method=21&month=${currentMonth}&year=${currentYear}`);
+      const response = await axios.get(`https://api.aladhan.com/v1/calendar?latitude=${lat}&longitude=${lon}&method=21&month=${currentMonth}&year=${currentYear}`);
       const data = response.data.data;
       const processedData = processPrayerData(data);
       setPrayerData(processedData);
@@ -58,7 +94,7 @@ export const usePrayerTimes = () => {
         setNextPrayer(todayIndex, processedData);
       }
     } catch (error) {
-    
+      setIsLoading(false);
       console.error("Error fetching prayer times:", error);
     }
     finally {
@@ -108,7 +144,7 @@ export const usePrayerTimes = () => {
     // If no more prayers today, set next prayer to Fajr of the next day
     if (!nextPrayerFound) {
       if (index < data.length - 1) {
-        const nextDayFajr = data[index + 1].prayers.Fajr;
+        // const nextDayFajr = data[index + 1].prayers.Fajr;
         setNextPrayerName("Fajr");
       } else {
         // Last day in data, no more prayers
@@ -147,5 +183,6 @@ export const usePrayerTimes = () => {
     goToPreviousDay,
     goToNextDay,
     isLoading,
+    locationError
   };
 };

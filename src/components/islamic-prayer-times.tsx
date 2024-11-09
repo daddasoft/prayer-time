@@ -7,7 +7,7 @@ export function IslamicPrayerTimes() {
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
   
   // Use the custom hook for prayer times data and navigation
-  const { currentDay, nextPrayerName, goToPreviousDay, goToNextDay, isLoading } = usePrayerTimes();
+  const { currentDay, nextPrayerName, goToPreviousDay, goToNextDay, isLoading, locationError } = usePrayerTimes();
   
   useEffect(() => {
     const timer = setInterval(() => {
@@ -33,6 +33,7 @@ export function IslamicPrayerTimes() {
         <h1 className="text-4xl font-bold text-[#1C6758] text-center relative z-10 font-arabic">أوقات الصلاة</h1>
         <p className="text-[#1C6758] text-center relative z-10">Prayer Times - Casablanca</p>
       </div>
+
 
       {/* Main Timer Card */}
       <Card className="bg-white shadow-lg rounded-2xl mb-8 overflow-hidden border border-[#1C6758]">
@@ -75,8 +76,10 @@ export function IslamicPrayerTimes() {
         ) : (
           <p>Loading prayer times...</p>
         )}
+
       </div>
     </>)}
+{locationError && (<p className="text-center text-lg text-red-500 font-bold">Location Error: {locationError}</p>)}
 
     </div>
   );

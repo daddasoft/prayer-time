@@ -1,10 +1,10 @@
-import { IslamicPrayerTimes } from './components/islamic-prayer-times'
+import   IslamicPrayerTimes   from './components/islamic-prayer-times'
 function App() {
  
   return (
-    <>
+ 
      <IslamicPrayerTimes />
-    </>
+    
   )
 }
 
